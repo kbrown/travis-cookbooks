@@ -32,4 +32,5 @@ end
 
 package "git" do
   action :install
+  options "--force-yes"
 end
