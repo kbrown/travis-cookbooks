@@ -1,0 +1,6 @@
+name             "kerl"
+maintainer       "Radek Szymczyszyn"
+maintainer_email "radoslaw.szymczyszyn@erlang-solutions.com"
+license          "Apache 2.0"
+description      "Stub env vars usually defined by travis_build_environment."
+version          "0.0.1"

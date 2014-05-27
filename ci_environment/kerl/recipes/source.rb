@@ -28,11 +28,11 @@ package "unixodbc-dev" do
   action :install
 end
 
-installation_root = "/home/#{node.travis_build_environment.user}/otp"
+installation_root = "/home/#{node.euc2014.user}/otp"
 
 directory(installation_root) do
-  owner node.travis_build_environment.user
-  group node.travis_build_environment.group
+  owner node.euc2014.user
+  group node.euc2014.group
   mode  "0755"
   action :create
 end
@@ -43,10 +43,10 @@ remote_file(node.kerl.path) do
 end
 
 
-home = "/home/#{node.travis_build_environment.user}"
+home = "/home/#{node.euc2014.user}"
 env  = {
   'HOME'               => home,
-  'USER'               => node.travis_build_environment.user,
+  'USER'               => node.euc2014.user,
   'KERL_DISABLE_AGNER' => 'yes',
   "KERL_BASE_DIR"      => "#{home}/.kerl"
 }
@@ -62,8 +62,8 @@ end
 execute "erlang.releases.update" do
   command "#{node.kerl.path} update releases"
 
-  user    node.travis_build_environment.user
-  group   node.travis_build_environment.group
+  user    node.euc2014.user
+  group   node.euc2014.group
 
   environment(env)
 
@@ -71,17 +71,17 @@ execute "erlang.releases.update" do
   subscribes :run, resources(:remote_file => node.kerl.path)
 end
 
-cookbook_file "#{node.travis_build_environment.home}/.erlang.cookie" do
-  owner node.travis_build_environment.user
-  group node.travis_build_environment.group
+cookbook_file "#{node.euc2014.home}/.erlang.cookie" do
+  owner node.euc2014.user
+  group node.euc2014.group
   mode 0600
 
   source "erlang.cookie"
 end
 
-cookbook_file "#{node.travis_build_environment.home}/.build_plt" do
-  owner node.travis_build_environment.user
-  group node.travis_build_environment.group
+cookbook_file "#{node.euc2014.home}/.build_plt" do
+  owner node.euc2014.user
+  group node.euc2014.group
   mode 0700
 
   source "build_plt"
@@ -92,25 +92,25 @@ node.kerl.releases.each do |rel, build|
   execute "build Erlang #{rel}" do
     command "#{node.kerl.path} build #{rel} #{rel}"
 
-    user    node.travis_build_environment.user
-    group   node.travis_build_environment.group
+    user    node.euc2014.user
+    group   node.euc2014.group
 
     environment(env)
 
     # make sure R14B02 won't cause R14B to be skipped. MK.
-    not_if "#{node.kerl.path} list builds | grep \"#{rel}$\"", :user => node.travis_build_environment.user, :environment => env
+    not_if "#{node.kerl.path} list builds | grep \"#{rel}$\"", :user => node.euc2014.user, :environment => env
   end
 
 
   execute "install Erlang #{rel}" do
     # cleanup is available starting with https://github.com/spawngrid/kerl/pull/28
-    command "#{node.kerl.path} install #{rel} #{installation_root}/#{rel} && #{node.kerl.path} cleanup #{rel} && rm -rf #{node.travis_build_environment.home}/.kerl/archives/*" # && ~/.build_plt #{installation_root}/#{rel} #{installation_root}/#{rel}/lib"
+    command "#{node.kerl.path} install #{rel} #{installation_root}/#{rel} && #{node.kerl.path} cleanup #{rel} && rm -rf #{node.euc2014.home}/.kerl/archives/*" # && ~/.build_plt #{installation_root}/#{rel} #{installation_root}/#{rel}/lib"
 
-    user    node.travis_build_environment.user
-    group   node.travis_build_environment.group
+    user    node.euc2014.user
+    group   node.euc2014.group
 
     environment(env)
 
-    not_if "#{node.kerl.path} list installations | grep #{rel}", :user => node.travis_build_environment.user, :environment => env
+    not_if "#{node.kerl.path} list installations | grep #{rel}", :user => node.euc2014.user, :environment => env
   end
 end
