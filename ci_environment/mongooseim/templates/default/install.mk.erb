@@ -1,0 +1,21 @@
+# TODO: this is stolen from the MongooseIM Debian build script;
+#       maybe just add it to the Makefile in the git repo?
+
+# TODO: this is hardcoded for Debian conventions
+
+PKG_NAME    := mongooseim
+PREFIX      := /usr/local
+INSTALL_DIR := ${DESTDIR}${PREFIX}/lib/${PKG_NAME}
+SBIN_DIR    := ${DESTDIR}${PREFIX}/sbin
+PKG_USER    := <%= node.mongooseim.user %>
+
+install: rel
+	install -v -o ${PKG_USER} -g ${PKG_USER} -d ${INSTALL_DIR}
+	cp -R rel/mongooseim/* ${INSTALL_DIR}
+	chown -R ${PKG_USER}:${PKG_USER} ${INSTALL_DIR}
+	[ -d $(SBIN_DIR) ] || install -d -m 755 $(SBIN_DIR)
+	install -m 550 -g ${PKG_USER} rel/mongooseim/bin/mongooseimctl ${SBIN_DIR}/mongooseimctl
+	sed -e "s*\(RUNNER_SCRIPT_DIR=\).\**\1${INSTALL_DIR}/bin*" rel/mongooseim/bin/mongooseimctl > ${SBIN_DIR}/mongooseimctl
+	sed -e "s*\(RUNNER_USER=\).\**\1mongooseim*" rel/mongooseim/bin/mongooseim > ${INSTALL_DIR}/bin/mongooseim
+
+include Makefile

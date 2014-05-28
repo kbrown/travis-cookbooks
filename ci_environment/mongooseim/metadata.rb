@@ -1,0 +1,6 @@
+name             "mongooseim"
+maintainer       "Radek Szymczyszyn"
+maintainer_email "radoslaw.szymczyszyn@erlang-solutions.com"
+license          "Apache 2.0"
+description      "Install MongooseIM straight from GitHub."
+version          "0.0.1"
