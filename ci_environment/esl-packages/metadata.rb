@@ -1,0 +1,6 @@
+name             "esl-packages"
+maintainer       "Radek Szymczyszyn"
+maintainer_email "radoslaw.szymczyszyn@erlang-solutions.com"
+license          "Apache 2.0"
+description      "Add Erlang Solutions repository to the list of Debian repos for apt."
+version          "0.0.1"
