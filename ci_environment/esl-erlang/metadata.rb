@@ -1,0 +1,6 @@
+name             "esl-erlang"
+maintainer       "Radek Szymczyszyn"
+maintainer_email "radoslaw.szymczyszyn@erlang-solutions.com"
+license          "Apache 2.0"
+description      "Install esl-erlang package from the Erlang Solutions repository."
+version          "0.0.1"
