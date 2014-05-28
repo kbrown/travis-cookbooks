@@ -1,4 +1,4 @@
-name             "kerl"
+name             "euc2014"
 maintainer       "Radek Szymczyszyn"
 maintainer_email "radoslaw.szymczyszyn@erlang-solutions.com"
 license          "Apache 2.0"
