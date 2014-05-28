@@ -1,0 +1,6 @@
+name             "tsung-git"
+maintainer       "Radek Szymczyszyn"
+maintainer_email "radoslaw.szymczyszyn@erlang-solutions.com"
+license          "Apache 2.0"
+description      "Install Tsung straight from GitHub."
+version          "0.0.1"
