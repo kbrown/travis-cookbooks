@@ -23,7 +23,7 @@ template "Prepare install.mk" do
 end
 
 bash "Install MongooseIM" do
-  not_if { File.exists? "/usr/local/bin/mongooseim" }
+  not_if { File.exists? "/usr/local/sbin/mongooseimctl" }
   only_if { File.exists? "mongooseim" }
   only_if { File.exists? "mongooseim/install.mk" }
   user "root"
