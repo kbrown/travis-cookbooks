@@ -50,8 +50,8 @@ ruby_block "Add MongooseIM node to cluster" do
     # TODO: hostname should be updated by Chef on boot and accessible without lazy_* prefix
     hostname = node.euc2014.lazy_hostname.call
     we = node.euc2014.hosts.select {|host| host[:name] == hostname }[0]
-    them = alive_extra_db_nodes()[0]
-    nodetool we, "add_to_cluster", (nodename them, :mongooseim)
+    they = alive_extra_db_nodes()[0]
+    nodetool we, "add_to_cluster", (nodename they, :mongooseim)
   end
 end
 
