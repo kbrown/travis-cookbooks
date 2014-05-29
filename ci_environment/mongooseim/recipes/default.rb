@@ -33,3 +33,51 @@ bash "Install MongooseIM" do
     make -f install.mk install
   EOSCRIPT
 end
+
+cookbook_file "/usr/local/lib/mongooseim/bin/nodetool" do
+  source "nodetool"
+  mode "0550"
+  owner node.mongooseim.user
+  group node.mongooseim.user
+  action :create
+end
+
+ruby_block "Add MongooseIM node to cluster" do
+  only_if { File.exists? "/usr/local/bin/mongooseim" }
+  only_if { File.exists? "/usr/local/lib/mongooseim/bin/nodetool" }
+  only_if { alive_extra_db_nodes.any? }
+  block do
+    # TODO: hostname should be updated by Chef on boot and accessible without lazy_* prefix
+    hostname = node.euc2014.lazy_hostname.call
+    we = node.euc2014.hosts.select {|host| host[:name] == hostname }[0]
+    them = alive_extra_db_nodes()[0]
+    nodetool we, "add_to_cluster", (nodename them, :mongooseim)
+  end
+end
+
+def alive_extra_db_nodes
+  extra_db_nodes.collect {|host| is_node_alive? host }
+end
+
+def extra_db_nodes
+  # TODO: hostname should be updated by Chef on boot and accessible without lazy_* prefix
+  hostname = node.euc2014.lazy_hostname.call
+  node.euc2014.hosts.select do |host|
+    host[:name] != hostname and host[:roles].include? :mongooseim
+  end
+end
+
+def is_node_alive? host
+  "pong" == (nodetool host, "ping")
+end
+
+def nodetool host, command, *rest
+  name = "-sname #{nodename host, :mongooseim}"
+  cookie = "-setcookie ejabberd"
+  args = "#{rest.join ' '}"
+  `#{nodetool} #{name} #{cookie} #{command} #{args}`.strip
+end
+
+def nodename host, role
+  "'#{role}@#{host[:name]}'"
+end
