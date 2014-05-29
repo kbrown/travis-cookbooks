@@ -42,6 +42,16 @@ cookbook_file "/usr/local/lib/mongooseim/bin/nodetool" do
   action :create
 end
 
+template "/usr/local/lib/mongooseim/etc/vm.args" do
+  source "vm.args.erb"
+  mode "0644"
+  owner node.mongooseim.user
+  group node.mongooseim.user
+  variables :hostname => node.mongooseim.hostname,
+            :cookie => node.mongooseim.cookie
+  action :create
+end
+
 ruby_block "Add MongooseIM node to cluster" do
   only_if { File.exists? "/usr/local/bin/mongooseim" }
   only_if { File.exists? "/usr/local/lib/mongooseim/bin/nodetool" }
