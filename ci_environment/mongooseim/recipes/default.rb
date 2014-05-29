@@ -47,8 +47,7 @@ ruby_block "Add MongooseIM node to cluster" do
   only_if { File.exists? "/usr/local/lib/mongooseim/bin/nodetool" }
   only_if { alive_extra_db_nodes.any? }
   block do
-    # TODO: hostname should be updated by Chef on boot and accessible without lazy_* prefix
-    hostname = node.euc2014.lazy_hostname.call
+    hostname = node.mongooseim.hostname
     we = node.euc2014.hosts.select {|host| host[:name] == hostname }[0]
     they = alive_extra_db_nodes()[0]
     nodetool we, "add_to_cluster", (nodename they, :mongooseim)
@@ -60,8 +59,7 @@ def alive_extra_db_nodes
 end
 
 def extra_db_nodes
-  # TODO: hostname should be updated by Chef on boot and accessible without lazy_* prefix
-  hostname = node.euc2014.lazy_hostname.call
+  hostname = node.mongooseim.hostname
   node.euc2014.hosts.select do |host|
     host[:name] != hostname and host[:roles].include? :mongooseim
   end
