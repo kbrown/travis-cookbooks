@@ -56,6 +56,7 @@ ruby_block "Add MongooseIM node to cluster" do
   only_if { File.exists? "/usr/local/bin/mongooseim" }
   only_if { File.exists? "/usr/local/lib/mongooseim/bin/nodetool" }
   only_if { alive_extra_db_nodes.any? }
+  user node.mongooseim.user
   block do
     hostname = node.mongooseim.hostname
     we = node.euc2014.hosts.select {|host| host[:name] == hostname }[0]
