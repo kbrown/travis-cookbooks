@@ -36,7 +36,7 @@ end
 
 cookbook_file "/usr/local/lib/mongooseim/bin/nodetool" do
   source "nodetool"
-  mode "0550"
+  mode "0554"
   owner node.mongooseim.user
   group node.mongooseim.user
   action :create
@@ -52,41 +52,125 @@ template "/usr/local/lib/mongooseim/etc/vm.args" do
   action :create
 end
 
-ruby_block "Add MongooseIM node to cluster" do
-  only_if { File.exists? "/usr/local/bin/mongooseim" }
-  only_if { File.exists? "/usr/local/lib/mongooseim/bin/nodetool" }
-  only_if { alive_extra_db_nodes.any? }
+file "#{node.mongooseim.home}/.erlang.cookie" do
+  mode "0600"
+  owner node.mongooseim.user
+  group node.mongooseim.user
+  action :create
+  content node.mongooseim.cookie
+end
+
+file node.mongooseim.cluster_info do
+  mode "0664"
+  owner node.mongooseim.user
+  group node.mongooseim.user
+  action :create
+  content ""
+end
+
+bash "Detect MongooseIM cluster configuration 1 of 2" do
   user node.mongooseim.user
+  group node.mongooseim.user
+  environment 'HOME' => node.mongooseim.home
+
+  node.mongooseim.this_node = MongooseIM.this_node node
+  node.mongooseim.extra_db_nodes = MongooseIM.extra_db_nodes node
+
+  cluster_info = node.mongooseim.cluster_info
+  extra_db_nodes = node.mongooseim.extra_db_nodes
+  escript_nodetool = "escript /usr/local/lib/mongooseim/bin/nodetool"
+
+  code <<-EOF
+  for node in #{extra_db_nodes.map{|n| n[:name]}.join "\n"}
+  do
+    echo -n mongooseim@$node >> #{cluster_info}
+    echo -n "\t" >> #{cluster_info}
+    #{escript_nodetool} -sname mongooseim@$node \
+                        -setcookie #{node.mongooseim.cookie} \
+        && echo pong >> #{cluster_info} \
+        || echo pang >> #{cluster_info}
+  done
+  EOF
+end
+
+ruby_block "Detect MongooseIM cluster configuration 2 of 2" do
+  cluster_info = node.mongooseim.cluster_info
   block do
-    hostname = node.mongooseim.hostname
-    we = node.euc2014.hosts.select {|host| host[:name] == hostname }[0]
-    they = alive_extra_db_nodes()[0]
-    nodetool we, "add_to_cluster", (nodename they, :mongooseim)
+    alive = node.mongooseim.alive_extra_db_nodes
+    File.open(cluster_info, "r").each do |line|
+      if line =~ /pong/ then
+        alive.push(MongooseIM.nodename_to_host node, line.split[0])
+      end
+    end
   end
 end
 
-def alive_extra_db_nodes
-  extra_db_nodes.collect {|host| is_node_alive? host }
-end
+ruby_block "Create add_to_cluster script" do
+  only_if { File.exists? "/usr/local/lib/mongooseim/bin/nodetool" }
 
-def extra_db_nodes
-  hostname = node.mongooseim.hostname
-  node.euc2014.hosts.select do |host|
-    host[:name] != hostname and host[:roles].include? :mongooseim
+  escript_nodetool = "escript /usr/local/lib/mongooseim/bin/nodetool"
+  cookie = node.mongooseim.cookie
+  block do
+    we = MongooseIM.host_to_nodename(node.mongooseim.this_node,
+                                     "mongooseim")
+    they = node.mongooseim.alive_extra_db_nodes[0]
+    unless they.nil?
+      they = MongooseIM.host_to_nodename(they, "mongooseim")
+      File.open(node.mongooseim.add_to_cluster, "w") do |file|
+        file.write <<-EOF
+        #!/bin/bash
+        cd #{node.mongooseim.home}
+        #{escript_nodetool} -exact_sname #{we} -setcookie #{cookie} add_to_cluster #{they}
+        EOF
+      end
+    else
+      FileUtils.rm([node.mongooseim.add_to_cluster])
+    end
+
   end
 end
 
-def is_node_alive? host
-  "pong" == (nodetool host, "ping")
+file node.mongooseim.add_to_cluster do
+  mode "0555"
+  owner node.mongooseim.user
+  group node.mongooseim.user
+  action :create
 end
 
-def nodetool host, command, *rest
-  name = "-sname #{nodename host, :mongooseim}"
-  cookie = "-setcookie ejabberd"
-  args = "#{rest.join ' '}"
-  `#{nodetool} #{name} #{cookie} #{command} #{args}`.strip
-end
+#bash "Add MongooseIM node to cluster" do
+#  only_if { File.exists? node.mongooseim.add_to_cluster }
 
-def nodename host, role
-  "'#{role}@#{host[:name]}'"
+#  user node.mongooseim.user
+#  group node.mongooseim.user
+#  environment "HOME" => node.mongooseim.home,
+#              "PATH" => "#{node.mongooseim.home}/bin"
+#  cwd node.mongooseim.home
+#  path ["#{node.mongooseim.home}/bin"]
+
+#  code node.mongooseim.add_to_cluster
+#end
+
+## Essentially, it doesn't matter whether this script is run from a file
+## or just created and executed on the fly as it still needs to be done from
+## a Ruby block and the final Mnesia dir permissions need to be set manually.
+##
+## That is, we can't use a `bash` resource because it couldn't find
+## my `add_to_cluster` script on disk; see the commented out code above.
+##
+## Even if it worked, the permissions wouldn't be set properly.
+##
+## In other words, this code block could be merged with
+## ruby_block "Create add_to_cluster script".
+##
+## Remember, without redirecting the output of add_to_cluster to file,
+## the script doesn't work. Why?
+ruby_block "Add MongooseIM node to cluster" do
+  only_if { File.exists? node.mongooseim.add_to_cluster }
+  block do
+    user = node.mongooseim.user
+    this_node = node.mongooseim.this_node
+    mnesia_dir = "#{node.mongooseim.home}/Mnesia.mongooseim@#{this_node[:name]}"
+    `#{node.mongooseim.add_to_cluster} > /tmp/add_to_cluster.out`
+    FileUtils.chown_R(user, user, [mnesia_dir])
+  end
 end
