@@ -166,10 +166,10 @@ end
 ## the script doesn't work. Why?
 ruby_block "Add MongooseIM node to cluster" do
   only_if { File.exists? node.mongooseim.add_to_cluster }
+  not_if { File.exists? node.mongooseim.mnesia_dir }
   block do
     user = node.mongooseim.user
-    this_node = node.mongooseim.this_node
-    mnesia_dir = "#{node.mongooseim.home}/Mnesia.mongooseim@#{this_node[:name]}"
+    mnesia_dir = node.mongooseim.mnesia_dir
     `#{node.mongooseim.add_to_cluster} > /tmp/add_to_cluster.out`
     FileUtils.chown_R(user, user, [mnesia_dir])
   end
