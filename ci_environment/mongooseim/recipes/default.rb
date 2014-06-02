@@ -154,13 +154,18 @@ end
 ## or just created and executed on the fly as it still needs to be done from
 ## a Ruby block and the final Mnesia dir permissions need to be set manually.
 ##
-## That is, we can't use a `bash` resource because it couldn't find
-## my `add_to_cluster` script on disk; see the commented out code above.
-##
-## Even if it worked, the permissions wouldn't be set properly.
+## Using a `bash` resource seems easier at the first thought,
+## but in fact that won't work, since we need to fetch the options from
+## a file before we can craft the script to run.
+## This needs to be done in a Ruby block executed at convergence time.
 ##
 ## In other words, this code block could be merged with
-## ruby_block "Create add_to_cluster script".
+## ruby_block "Create add_to_cluster script",
+## but a `bash` block in its place won't be sufficient.
+##
+## > Mnesia dir permissions need to be set manually.
+## Why? Because we can't use `user`/`group` attributes with a Ruby
+## block resource.
 ##
 ## Remember, without redirecting the output of add_to_cluster to file,
 ## the script doesn't work. Why?
@@ -174,3 +179,16 @@ ruby_block "Add MongooseIM node to cluster" do
     FileUtils.chown_R(user, user, [mnesia_dir])
   end
 end
+
+## This block proves that user/group attributes actually
+## work OK when creating new files.
+#bash "experiment" do
+#  user node.mongooseim.user
+#  group node.mongooseim.user
+#  cwd node.mongooseim.home
+
+#  code <<-EOF
+#  touch experiment
+#  bin/make-experiment-2
+#  EOF
+#end
