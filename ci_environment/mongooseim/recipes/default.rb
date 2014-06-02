@@ -158,6 +158,8 @@ end
 ## but in fact that won't work, since we need to fetch the options from
 ## a file before we can craft the script to run.
 ## This needs to be done in a Ruby block executed at convergence time.
+## Moreover, the `bash` resource couldn't find a pregenerated script
+## (see commented out block above).
 ##
 ## In other words, this code block could be merged with
 ## ruby_block "Create add_to_cluster script",
