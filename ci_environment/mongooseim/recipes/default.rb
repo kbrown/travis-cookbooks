@@ -123,18 +123,16 @@ ruby_block "Create add_to_cluster script" do
         #{escript_nodetool} -exact_sname #{we} -setcookie #{cookie} add_to_cluster #{they}
         EOF
       end
+      FileUtils.chown(node.mongooseim.user,
+                      node.mongooseim.user,
+                      [node.mongooseim.add_to_cluster])
+      FileUtils.chmod(0555, node.mongooseim.add_to_cluster)
     else
-      FileUtils.rm([node.mongooseim.add_to_cluster])
+      f = node.mongooseim.add_to_cluster
+      FileUtils.rm([f]) if File.exists? f
     end
 
   end
-end
-
-file node.mongooseim.add_to_cluster do
-  mode "0555"
-  owner node.mongooseim.user
-  group node.mongooseim.user
-  action :create
 end
 
 #bash "Add MongooseIM node to cluster" do
