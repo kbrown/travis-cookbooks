@@ -1,3 +1,11 @@
+cookbook_file "/etc/security/limits.conf" do
+  source "limits.conf"
+  mode "0644"
+  owner "root"
+  group "root"
+  action :create
+end
+
 bash "Install Tsung from GitHub" do
   not_if { File.exists? "/usr/local/bin/tsung" }
   user "root"
