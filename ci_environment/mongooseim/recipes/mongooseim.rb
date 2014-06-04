@@ -42,6 +42,14 @@ cookbook_file "/usr/local/lib/mongooseim/bin/nodetool" do
   action :create
 end
 
+cookbook_file "/etc/security/limits.conf" do
+  source "limits.conf"
+  mode "0644"
+  owner "root"
+  group "root"
+  action :create
+end
+
 template "/usr/local/lib/mongooseim/etc/vm.args" do
   source "vm.args.erb"
   mode "0644"
