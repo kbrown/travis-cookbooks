@@ -10,7 +10,7 @@ apt_package "libexpat1-dev" do action :install end
 
 bash "Clone MongooseIM" do
   not_if { File.exists? "mongooseim" }
-  code "git clone git://github.com/esl/mongooseim -b 1.4.0"
+  code "git clone git://github.com/esl/mongooseim && cd mongooseim/ && git checkout 6247b91"
 end
 
 template "Prepare install.mk" do
