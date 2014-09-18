@@ -89,7 +89,7 @@ bash "Detect MongooseIM cluster configuration 1 of 2" do
   escript_nodetool = "escript /usr/local/lib/mongooseim/bin/nodetool"
 
   code <<-EOF
-  for node in #{extra_db_nodes.map{|n| n[:name]}.join "\n"}
+  for node in #{extra_db_nodes.map{|n| n[:name]}.join " "}
   do
     echo -n mongooseim@$node >> #{cluster_info}
     echo -n "\t" >> #{cluster_info}
